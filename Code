@@ -1,1 +1,72 @@
-#entrez ici le code
+#on peut retrouver de petits bouts donc on ne peut pas identifier de proteines avec prcq'elles sont dans toutes les prots=match multiple
+#ou ne trouver aucun match 
+#pour dire qu'une prot est présente il faut trouver bcp de match
+#il faut jeter ttes les prots qui n'ont pas de match et celles qui ont bcp de matchs et garder ceux qui ont 2 matchs
+#on peut rassembler les petits bouts de prot qui ont bcp de match et qui vont former des super peptides et auront moins de match 
+#commencer par faire les paire de proteines et ensuites commencer a rajouter les petits peptides pour crer des supper peptides 
+#pour l'instant c'est des matchs exacts 
+#on doit trouver exactement les peptides dans nos sequences de proteines 
+#fonction qui decrit le chevauchement des peptides a la fin plus difficile
+#la derniere avec la fonction gloutonne, on prend un pep et on regarde quel peptide le chevauche a gauche pour crer un 1 er assemblage ensuite a droite po=uis on reviens a gauche etc.jusqu'a ce qu'on est plus de peptides qui chevauchent (on ne prend pas plusieurs fois le meme peptide dans un assemblaged'un meme super peptide)
+#match unique cad qu'un peptide match 1 seule fois et uniquement avec une sequence prooteiaue (pas de matche d'un peptide avec 2 prot diff par exemple)
+
+
+
+
+def read_fasta (fasta_file):
+    seq = {}
+    current_key=""
+    with open(fasta_file, 'r') as file:
+        for line in file:
+            line = line.strip() 
+            #print(line)#afficher les 2 fichiers FASTA
+            if line.startswith('>'):
+                #print(line)#afficher uniquement la ligne qui commance par >
+                 current_key = line[1:]
+                 # print(current_key)#affectation d'une variable = affectation de la première ligne a toutes les lignes commençant par >
+                 seq[current_key] = ""
+                 # print(seq)#on a mis toutes les premières lignes dans le dictionnaire 
+            else:
+                #print(line)#afficher les lignes qui ne commance pas par >
+                seq[current_key] += line
+                # print(seq)
+    # print(seq)
+    return seq
+
+def match_id(r,fasta_file):
+    proteins = read_fasta("proteines-test.fa")
+    peptides = read_fasta("peptides-test.fa")
+    matching_proteins = []
+    # print(matching_proteins)
+
+    for protein_id, seq in proteins.items():
+        if r in seq:
+            matching_proteins.append(protein_id)
+            # print(matching_proteins)
+
+    return matching_proteins if matching_proteins else None
+
+
+    
+    
+
+    
+#def unique_match_set(peptide_file, db_file):
+    
+    
+    
+#def overlap(r1, r2):
+    
+    
+    
+#def assembly_peptides(peptide_file, overlap_min):
+
+#Programme principale
+print("Liste Proteines")
+read_fasta("proteines-test.fa")
+match_id(r,"proteines-test.fa")
+# match_id("peptides-test.fa","proteines-test.fa")
+
+print("Liste Peptides")
+read_fasta("peptides-test.fa")
+match_id('r',"peptides-test.fa")
