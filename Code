@@ -1,132 +1,139 @@
-# Fonction pour lire un fichier FASTA et renvoyer un dictionnaire de séquences
+# Fonction pour lire un fichier FASTA et renvoyer un dictionnaire de sequences
 def read_fasta(fasta_file):
-    sequences = {}  # Initialisation d'un dictionnaire pour stocker les séquences
-    current_key = None  # Variable pour stocker la clé actuelle (identifiant de la séquence)
+    sequences = {}  # Initialisation d'un dictionnaire pour stocker les sequences
+    current_key = None  # Variable pour stocker la cle actuelle (identifiant de la sequence)
 
     # Ouvre le fichier FASTA en mode lecture
     with open(fasta_file, 'r') as file:
         # Parcourt chaque ligne du fichier
         for line in file:
-            line = line.strip()  # Supprime les espaces en début et fin de ligne
+            line = line.strip()  # Supprime les espaces en debut et fin de ligne
             if line.startswith('>'):
-                current_key = line[1:]  # Récupère l'identifiant en enlevant le caractère '>'
-                sequences[current_key] = ''  # Initialise la séquence pour la clé actuelle
+                current_key = line[1:]  # Recupere l'identifiant en enlevant le caractere '>'
+                sequences[current_key] = ''  # Initialise la sequence pour la cle actuelle
             else:
-                sequences[current_key] += line  # Ajoute la ligne Ã  la séquence existante
+                sequences[current_key] += line  # Ajoute la ligne a la sequence existante
 
-    return sequences  # Retourne le dictionnaire de séquences
+    return sequences  # Retourne le dictionnaire de sequences
 
 
-# Fonction pour trouver les protÃ©ines qui correspondent Ã  un peptide dans un fichier FASTA
+# Fonction pour trouver les proteines qui correspondent a un peptide dans un fichier FASTA
 def match_id(peptide, fasta_file):
-    proteins = []  # Initialisation d'une liste pour stocker les protÃ©ines correspondantes
+    proteins = []  # Initialisation d'une liste pour stocker les proteines correspondantes
 
     # Ouvre le fichier FASTA en mode lecture
-    with open(fasta_file, 'r') as file:
-        current_protein = None  # Variable pour stocker l'identifiant de la protÃ©ine actuelle
+    with open(fasta_file, 'r') as file: #le 'r' correspond au droits de l'auteur a la lecture (r w x)
+        current_protein = None  # Variable pour stocker l'identifiant de la proteine actuelle
 
         # Parcourt chaque ligne du fichier
         for line in file:
-            line = line.strip()  # Supprime les espaces en dÃ©but et fin de ligne
+            line = line.strip()  # Supprime les espaces en debut et fin de ligne
             if line.startswith('>'):
-                current_protein = line[1:]  # RÃ©cupÃ¨re l'identifiant en enlevant le caractÃ¨re '>'
+                current_protein = line[1:]  # Recupere l'identifiant en enlevant le caractere '>'
             else:
                 overlap_len = overlap(peptide, line)  # Calcule la longueur de l'overlap
                 if overlap_len > 0:
-                    proteins.append(current_protein)  # Ajoute l'identifiant de la protÃ©ine correspondante
+                    proteins.append(current_protein)  # Ajoute l'identifiant de la prot√©ine correspondante
 
-    return proteins if proteins else None  # Retourne la liste d'identifiants de protÃ©ines ou None si vide
+    return proteins if proteins else None  # Retourne la liste d'identifiants de prot√©ines ou None si vide
 
 
-# Fonction pour calculer la longueur de l'overlap entre deux sÃ©quences
+# Fonction pour calculer la longueur de l'overlap entre deux s√©quences
+#regarder le chevauchement entre les peptides r1 et r2 (le chevauchement a droite pour r1 et a gauche pour r2)
+#il est mieux de creer une autre fonnction qui fait l'inverse de la fonction overlap mais en l'utilisant 
 def overlap(r1, r2):
-    max_overlap = 0  # Initialisation de la longueur maximale de l'overlap
+    max_overlap = 0
 
-    # Parcourt les longueurs possibles de l'overlap
     for i in range(1, min(len(r1), len(r2)) + 1):
-        if r1[-i:] == r2[:i]:  # VÃ©rifie si les suffixes et prÃ©fixes correspondent
+        if r1.endswith(r2[:i]):
             max_overlap = i
 
-    return max_overlap  # Retourne la longueur maximale de l'overlap
+    return max_overlap
 
 
 # Fonction pour assembler des peptides ayant un overlap suffisant
 def assembly_peptides(peptide_file, overlap_min):
-    peptides = read_fasta(peptide_file)  # RÃ©cupÃ¨re les peptides du fichier FASTA
+    peptides = read_fasta(peptide_file)  # Recupere les peptides du fichier FASTA
     assemblies = []  # Initialisation d'une liste pour stocker les assemblages
-
+    
     while peptides:
-        current_peptide = peptides.popitem()  # Prend le dernier Ã©lÃ©ment du dictionnaire de peptides
-        assembly = extend_assembly(current_peptide, peptides, overlap_min)  # Ã‰tend l'assemblage
-        assemblies.append(assembly)  # Ajoute l'assemblage Ã  la liste
+        current_peptide = peptides.popitem()  # Prend le dernier element du dictionnaire de peptide
+        assembly = extend_assembly(current_peptide, peptides, overlap_min)  # etend l'assemblage(cherche les chevauchements pour creer un super peptide)
+        assemblies.append(assembly)  # Ajoute l'assemblage a la liste
 
     return assemblies  # Retourne la liste des assemblages
 
 
-# Fonction pour Ã©tendre un assemblage de peptides
+# Fonction pour etendre un assemblage de peptides
 def extend_assembly(current_peptide, peptides, overlap_min):
-    assembly = current_peptide[1]  # RÃ©cupÃ¨re la sÃ©quence du peptide actuel
+    assembly = current_peptide[1]  # Recupere la sequence du peptide actuel
+    peptides = list(peptides.items())  # Convertit le dictionnaire en liste pour optimiser l'accès
 
     while True:
-        extended = False  # Indicateur pour savoir si l'assemblage a Ã©tÃ© Ã©tendu
-        for key, value in peptides.items():
-            left_overlap = overlap(value, assembly)  # Calcule l'overlap Ã  gauche
-            right_overlap = overlap(assembly, value)  # Calcule l'overlap Ã  droite
+        extended = False  # Indicateur pour savoir si l'assemblage a ete etendu
+        for key, value in peptides:
+            left_overlap = overlap(value, assembly)  # Calcule l'overlap a gauche
+            right_overlap = overlap(assembly, value)  # Calcule l'overlap a droite
 
             if left_overlap >= overlap_min:
-                assembly = value + assembly[left_overlap:]  # Ã‰tend Ã  gauche
-                peptides.pop(key)  # Retire le peptide utilisÃ© de la liste
+                assembly = value + assembly[left_overlap:]  # etend a gauche
+                peptides.remove((key, value))  # Retire le peptide utilise de la liste
                 extended = True
                 break
             elif right_overlap >= overlap_min:
-                assembly = assembly + value[right_overlap:]  # Ã‰tend Ã  droite
-                peptides.pop(key)  # Retire le peptide utilisÃ© de la liste
+                assembly = assembly + value[right_overlap:]  # etend a droite
+                peptides.remove((key, value))  # Retire le peptide utilise de la liste
                 extended = True
                 break
 
         if not extended:
             break
 
-    return assembly  # Retourne la sÃ©quence assemblÃ©e
+    return assembly  # Retourne la sequence assemblee
 
-
-# Fonction pour trouver un ensemble unique de peptides correspondant Ã  des protÃ©ines
+# Fonction pour trouver un ensemble unique de peptides correspondant a des proteines
 def unique_match_set(peptide_file, db_file):
-    peptides = read_fasta(peptide_file)  # RÃ©cupÃ¨re les peptides du fichier FASTA
-    proteins_count = {}  # Initialisation d'un dictionnaire pour compter les occurrences des protÃ©ines
+    peptides = read_fasta(peptide_file)
+    proteins_count = {}
 
-    # Parcourt chaque peptide et trouve les protÃ©ines correspondantes
-    for peptide_key, peptide_seq in peptides.items():
+    for peptide_seq in peptides.values():
         matched_proteins = match_id(peptide_seq, db_file)
+
         if matched_proteins:
-            # Compte le nombre d'occurrences de chaque protÃ©ine
             for protein in matched_proteins:
                 proteins_count[protein] = proteins_count.get(protein, 0) + 1
 
-    # SÃ©lectionne les protÃ©ines avec une seule occurrence (unique)
-    unique_matches = [protein for protein, count in proteins_count.items() if count == 1]
     result_set = set()
-
-    # Parcourt Ã  nouveau chaque peptide et trouve les protÃ©ines correspondantes
     for peptide_key, peptide_seq in peptides.items():
-        matched_proteins = match_id(peptide_seq, db_file)
-        if matched_proteins and any(protein in unique_matches for protein in matched_proteins):
-            result_set.add(peptide_key)  # Ajoute le peptide Ã  l'ensemble rÃ©sultant
+        if match_id(peptide_seq, db_file) and all(proteins_count[protein] == 1 for protein in match_id(peptide_seq, db_file)):
+            result_set.add(peptide_key)
 
-    return result_set  # Retourne l'ensemble rÃ©sultant
+    return len(result_set), result_set
 
 
-# ExÃ©cution du script si c'est le fichier principal
+#programme principal
+# Execution du script si c'est le fichier principal
+
+
 if __name__ == "__main__":
     peptide_file = "small_peptides.fa"
     db_file = "human_blood_proteome.fa"
-    overlap_min = 3  # DÃ©finir la longueur minimale d'overlap souhaitÃ©e
+    overlap_min = 3  # Définir la longueur minimale d'overlap souhaitée
 
-    unique_proteins = unique_match_set(peptide_file, db_file)
-    print("ProtÃ©ines Uniques:")
-    print(unique_proteins)
+    # Obtenir le résultat des protéines uniques
+    unique_proteins_count, unique_proteins_set = unique_match_set(peptide_file, db_file)
 
+    # Obtenir les résultats des peptides assemblés
     assemblies = assembly_peptides(peptide_file, overlap_min)
-    print("\nPeptides AssemblÃ©s:")
-    for i, assembly in enumerate(assemblies):
-        print(f"{i + 1}: {assembly}")
+
+    # Écrire les résultats dans un fichier
+    with open("resultats.txt", "w") as result_file:
+        result_file.write(f"Nombre de protéines uniques : {unique_proteins_count}\n")
+        result_file.write("Protéines uniques :\n")
+        for protein in unique_proteins_set:
+            result_file.write(f"{protein}\n")
+
+        result_file.write("\nPeptides assemblés :\n")
+        for i, assembly in enumerate(assemblies):
+            result_file.write(f"{i + 1}: {assembly}\n")
+
